@@ -74,3 +74,4 @@
 /Users/aarongiron/Desktop/DotNet/FruitAPI/obj/Debug/net8.0/FruitAPI.pdb
 /Users/aarongiron/Desktop/DotNet/FruitAPI/obj/Debug/net8.0/FruitAPI.genruntimeconfig.cache
 /Users/aarongiron/Desktop/DotNet/FruitAPI/obj/Debug/net8.0/ref/FruitAPI.dll
+/Users/aarongiron/Desktop/DotNet/FruitAPI/obj/Debug/net8.0/FruitAPI.sourcelink.json

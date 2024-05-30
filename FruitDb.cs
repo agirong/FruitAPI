@@ -12,9 +12,9 @@ class FruitDb : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<Fruit>()
             .HasData(
-            new Fruit { Id = 1, Name = "Apple", Instock = true },
-            new Fruit { Id = 2, Name = "Banana", Instock = false },
-            new Fruit { Id = 3, Name = "Orange", Instock = true }
+            new Fruit { Id = 1, Name = "Apple", Instock = true, Price = 15},
+            new Fruit { Id = 2, Name = "Banana", Instock = false, Price = 5},
+            new Fruit { Id = 3, Name = "Orange", Instock = true, Price=4 }
             );
     }
 }
