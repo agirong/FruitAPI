@@ -1,6 +1,7 @@
+using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<FruitDb>(opt => opt.UseInMemoryDatabase("FruitList"));
@@ -12,10 +13,68 @@ builder.Services.AddSwaggerGen(options =>
     {
         Version = "v1",
         Title = "Fruit API",
-        Description = "API for managing a list of fruit and their stock status.",
+        Description = "API for managing a list of fruit and their stock status.",        
+    });
+    options.AddSecurityDefinition("basic", new OpenApiSecurityScheme{
+        Name="Authorization",
+        Type=SecuritySchemeType.Http,
+        Scheme="basic",
+        In=ParameterLocation.Header,
+        Description = "Ingrese usuario y contrasena"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement{
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="basic"       
+                }
+            },
+            new string []{}
+        }
     });
 });
 var app = builder.Build();
+
+app.Use(async (context,next)=>
+{
+    var path = context.Request.Path;
+    if (path.StartsWithSegments("/swagger") || path.StartsWithSegments("/swagger/v1/swagger.json"))
+    {
+        await next.Invoke();
+        return;
+    }
+
+    //Comprobar que la solicitud tiene el encabezado de autorizacion
+    if(!context.Request.Headers.ContainsKey("Authorization"))
+    {
+        context.Response.Headers["WWW-Authenticate"] = "Basic";
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsync("Authorization header missing");
+        return;
+    }
+
+    var authHeader= AuthenticationHeaderValue.Parse(context.Request.Headers["Authorization"]);
+    var credentialBytes = Convert.FromBase64String(authHeader.Parameter);
+    var credentials = Encoding.UTF8.GetString(credentialBytes).Split(':');
+    var username = credentials[0];
+    var password = credentials[1];
+
+    //Credenciales predeterminadas
+    var validUsername = "username";
+    var validPassword = "Aaron&Kelly";
+    
+    if(username== validUsername && password==validPassword){
+        await next.Invoke();
+    }else{
+        context.Response.Headers["WWW-Authenticate"] = "Basic";
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        context.Response.WriteAsync("Invalid Credentials");
+    }
+    
+});
 
 using (var scope = app.Services.CreateScope())
 {
@@ -56,6 +115,7 @@ app.MapPut("/fruitlist/{id}", async (int id, Fruit inputFruit, FruitDb db) =>
 
     fruit.Name = inputFruit.Name;
     fruit.Instock = inputFruit.Instock;
+    fruit.Price = inputFruit.Price;
 
     await db.SaveChangesAsync();
 
