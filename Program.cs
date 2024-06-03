@@ -83,9 +83,34 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
 }
 
- app.MapGet("/fruitlist",  async (FruitDb db) =>
-    await db.Fruits.ToListAsync())
-    .WithTags("Get all fruit"); 
+ app.MapGet("/fruitlist", async (FruitDb db, int page = 1, int pageSize = 10) =>
+{
+    // Calcular el número total de elementos
+    var totalItems = await db.Fruits.CountAsync();
+
+    // Calcular el número total de páginas
+    var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+    // Obtener los elementos paginados
+    var fruits = await db.Fruits
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+    // Retornar los elementos junto con la información de paginación
+    var result = new
+    {
+        Page = page,
+        PageSize = pageSize,
+        TotalItems = totalItems,
+        TotalPages = totalPages,
+        Items = fruits
+    };
+
+    return Results.Ok(result);
+})
+.WithTags("Get all fruit");
+
 
 app.MapGet("/fruitlist/instock", async (FruitDb db) =>
     await db.Fruits.Where(t => t.Instock).ToListAsync())
